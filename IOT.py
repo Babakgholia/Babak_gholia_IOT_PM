@@ -2,6 +2,7 @@ import paho.mqtt.client as mqtt
 import time
 import adafruit_dht as dht
 from typing import Dict, Optional
+import random
 class Device:
     '''main class for device management'''
     
@@ -86,8 +87,8 @@ class Admin_panel:
     '''class to manage all devices and sensors'''
     def __init__(self,gp: Optional[Dict] = None):
         self.gp = gp or {}
-        self.devices: Dict[str, Device] = {} #saves topic as the adress and device as the instance of the main class to manage better
-        self.sensors: Dict[str, Sensor] = {}  #saves topic as the adress and sensor as the instance of the main class to manage better
+        self.devices: Dict[str, Device] = {} #saves topic as the adress and device as the instance of the main class for better usage in class
+        self.sensors: Dict[str, Sensor] = {}  #saves topic as the adress and sensor as the instance of the main class for better usage in class
         self._initialize_devices()   #auto arranging devices and sensors on creating an instance of class
         
     def _initialize_devices(self):  #sorting datas like the example in bottom
@@ -124,34 +125,50 @@ class Admin_panel:
         else :
             print('device already exists')
         
-        if device_type in ['termometers']:
+        if device_type in ['termometers']:                                         # can be complited with other sensors group
             pin = config.get('pin', 4)
             self.sensors[topic] = Sensor(topic, pin)
-        else:
+        else:                                                                      #for devices other than read_only sensors
             self.devices[topic] = Device(topic, config['mqtt'], config['port'])
             self.devices[topic].connect()
-                    
+
+    def ghost_walk(self,duration):              #randomly turns lamps on and off in 15 to 30 minute time period
+        lamp_topics = [topic for topic, device in self.devices.items() if device.device_type == "lamps"]
+        start_time=time.time()
+        while (time.time() - start_time) < duration:
+            target1, target2 = random.sample(lamp_topics, 2)
+            device1 = self.devices[target1]
+            device2 = self.devices[target2]
+            
+            device1.turn_on()
+            device2.turn_on()
+            
+            time.sleep(random.choice([900,1800]))
+            
+            device1.turn_off()
+            device2.turn_off()
+            
     def turn_on_devices_in_group(self, group_name: str):
         for topic, device in self.devices.items():
             if f"/{group_name}/" in topic:  #prevents simiraty mistakes in matching gp_name
                 device.turn_on()
             
-    def turn_on_all(self):
+    def turn_on_all(self): #turns on all devices at same time!!!!
         for device in self.devices.values():
             device.turn_on()
     
     def turn_off_all(self):
-        for device in self.devices.values():
+        for device in self.devices.values(): #turns off all devices at same time
             device.turn_off()
-            
-    def get_status_sensor_in_group(self, group_name: str) -> Dict[str, float]:
+    
+    def get_sensor_status_in_group(self, group_name: str) -> Dict[str, float]:  #returns status of all sensors in a same group as a dict
         sensor_status = {}
         for topic, sensor in self.sensors.items():
             if f"/{group_name}/" in topic:
                 sensor_status[sensor.name] = sensor.read_sensor()
         return sensor_status
             
-    def get_status_in_group(self, group_name: str) -> str:
+    def get_device_status_in_group(self, group_name: str) -> str: #returns status of all devises in a same group as a string 
         status_list = []
         for topic, device in self.devices.items():
             if f"/{group_name}/" in topic:
@@ -159,7 +176,7 @@ class Admin_panel:
                 status_list.append(f"{device.name}: {status}")
         return ", ".join(status_list)
     
-    def get_status_in_device_type(self, device_type: str) -> str:
+    def get_status_in_device_type(self, device_type: str) -> str: #returns device status of those with same type(e.g. 'lamps')
         status_list = []
         for device in self.devices.values():
             if device.device_type == device_type:
