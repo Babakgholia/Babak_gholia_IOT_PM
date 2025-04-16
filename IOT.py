@@ -12,7 +12,7 @@ class Device:
         self.location=self.topic_list[0]
         self.group=self.topic_list[1]
         self.device_type=self.topic_list[2]
-        self.name=self.topic_list[3]
+         self.name=self.topic_list[3]
         self.status_topic = f"{self.topic}/status"  #prepared adress for requesting stat from broker
         
         self.mqtt_broker=mqtt_broker
@@ -125,10 +125,10 @@ class Admin_panel:
         else :
             print('device already exists')
         
-        if device_type in ['termometers']:                                         # can be complited with other sensors group
+        if device_type in ['termometers']: # can be complited with other sensors group
             pin = config.get('pin', 4)
             self.sensors[topic] = Sensor(topic, pin)
-        else:                                                                      #for devices other than read_only sensors
+        else:                      #for devices other than read_only sensors
             self.devices[topic] = Device(topic, config['mqtt'], config['port'])
             self.devices[topic].connect()
 
@@ -152,7 +152,12 @@ class Admin_panel:
         for topic, device in self.devices.items():
             if f"/{group_name}/" in topic:  #prevents simiraty mistakes in matching gp_name
                 device.turn_on()
-            
+    
+    def turn_off_devices_in_group(self, group_name: str):
+        for topic, device in self.devices.items():
+            if f"/{group_name}/" in topic:  #prevents simiraty mistakes in matching gp_name
+                device.turn_off()
+    
     def turn_on_all(self): #turns on all devices at same time!!!!
         for device in self.devices.values():
             device.turn_on()
