@@ -1,3 +1,14 @@
+'''
+
+APM:
+
+Salam babak jan , daryaft shod das khosh
+
+
+'''
+
+
+
 import paho.mqtt.client as mqtt
 import time
 import adafruit_dht as dht
