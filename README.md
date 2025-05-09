@@ -1,2 +1,2 @@
-# Babak_gholia_IOT_PM
-in progress with team
+IOT device and sensor management automation 
+still need a database a graphical interface and some changes
